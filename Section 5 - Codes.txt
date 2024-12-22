@@ -1,0 +1,179 @@
+#include<glut.h>
+#include<math.h>
+
+#define GL_PI 3.1415f
+
+// Initialize rotation amounts
+GLfloat xRot = 0.0;
+GLfloat yRot = 0.0;
+
+// in case of using TimerFun:
+GLfloat angle = 0.0;
+int refreshMills = 1;
+
+void timer(int value)
+{
+	glutPostRedisplay();
+	glutTimerFunc(refreshMills, timer, 0);
+}
+
+// Sheet 2:
+void drawPileOfCircles()
+{
+	GLfloat x, y, z, r, angle;
+	r = 10;
+	z = 10;
+
+	for (int i = 0; i < 6; i++)
+	{
+		// Positive side:
+		glBegin(GL_LINE_STRIP);
+		for (angle = 0; angle <= 2 * GL_PI; angle += 0.001)
+		{
+			x = (r + i * 10) * cos(angle);
+			y = (r + i * 10) * sin(angle);
+
+			glVertex3f(x, y, z + i * 10);
+		}
+		glEnd();
+	}
+	
+}
+
+void drawMolecule()
+{	
+	GLfloat x, y, z, r, angle;
+	r = 20;
+	x = 60;
+
+	glColor3f(0.6, 1, 0);
+	glBegin(GL_QUAD_STRIP);
+	for (angle = 0; angle <= 2 * GL_PI; angle += 0.00001)
+	{
+		z = r * cos(angle);
+		y = r * sin(angle);
+
+		glVertex3f(0, y, z);
+		glVertex3f(x, y, z);
+	}
+	glEnd();
+
+	glColor3f(0.5, 0.5, 0.5);
+	glBegin(GL_QUAD_STRIP);
+	for (angle = 0; angle <= 2 * GL_PI; angle += 0.001)
+	{
+		z = r * cos(angle);
+		y = r * sin(angle);
+
+		glVertex3f(0, y, z);
+		glVertex3f(-x, y, z);
+	}
+	glEnd();
+
+	glColor3f(0.6, 1, 0);
+	glPushMatrix();
+	glTranslatef(x+20, 0, 0);
+	glutSolidSphere(r*2, 30, 30);
+	glPopMatrix();
+
+	glColor3f(0.5, 0.5, 0.5);
+	glPushMatrix();
+	glTranslatef(-(x + 20), 0, 0);
+	glutSolidSphere(r * 2, 10, 10);
+	glPopMatrix();
+
+}
+
+void setRC()
+{
+	glClearColor(1, 1, 1, 1);  // set bg color
+	//glShadeModel(GL_FLAT);
+}
+
+void changeSize(GLsizei w, GLsizei h)
+{
+	GLfloat aspectRatio; // W:h
+	GLfloat nRange = 200;
+
+	if (h == 0)
+		h = 1;
+
+	glViewport(0, 0, w, h);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	aspectRatio = (GLfloat)w / (GLfloat)h;
+
+	if (w <= h)
+		glOrtho(-nRange, nRange, -nRange / aspectRatio,
+			nRange / aspectRatio , nRange, -nRange);
+	else
+		glOrtho(-nRange * aspectRatio, nRange * aspectRatio,
+			-nRange, nRange, nRange, -nRange);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void specialKeys(int key, int x, int y)
+{
+	if (key == GLUT_KEY_UP)
+		xRot -= 5.0;
+	if (key == GLUT_KEY_DOWN)
+		xRot += 5.0;
+	if (key == GLUT_KEY_LEFT)
+		yRot -= 5.0;
+	if (key == GLUT_KEY_RIGHT)
+		yRot += 5.0;
+
+	if (xRot > 356.0)
+		xRot = 0.0;
+	if (xRot < -1.0)
+		xRot = 355.0;
+	if (yRot > 356.0)
+		yRot = 0.0;
+	if (yRot < -1.0)
+		yRot = 355.0;
+
+	glutPostRedisplay();
+}
+
+
+void RenderScene()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+
+	// Draw
+	glColor3f(0, 0, 0);
+	glPushMatrix();
+	glRotatef(xRot, 1, 0, 0);
+	glRotatef(yRot, 0, 1, 0);
+	//drawPileOfCircles();
+	drawMolecule();
+	glPopMatrix();
+
+	glFlush();
+}
+
+int main(int argc, char* argv[])
+{
+	// 1) Initialization:
+	glutInit(&argc, argv);
+	glutInitWindowSize(500, 500);
+	glutCreateWindow("OpenGL Prog.");
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH);
+
+	// 2) CallBack:
+	glutDisplayFunc(RenderScene);
+	glutReshapeFunc(changeSize);
+	glutSpecialFunc(specialKeys);
+	//glutTimerFunc(0, timer, 0);
+	setRC();
+
+	// 3) Event Loop:
+	glutMainLoop();
+
+	return 0;
+}
